@@ -1,0 +1,43 @@
+version: '3.6'
+
+networks:
+  app-tier:
+    driver: bridge
+
+services:
+  app:
+    build: .
+    ports:
+      - 3210:3210
+    env_file: .env
+    depends_on:
+      - db
+    environment:
+      WAIT_HOSTS: db:3306
+      DB_HOST: host.docker.internal
+    networks:
+      - app-tier
+  db:
+    platform: linux/amd64
+    image: mysql:5.7
+    networks:
+      - app-tier
+    environment:
+      MYSQL_DATABASE: db
+      MYSQL_USER: user
+      MYSQL_PASSWORD: password
+      MYSQL_ROOT_PASSWORD: password
+    ports:
+      - 3306:3306
+    expose:
+      - 3306
+    volumes:
+      - ./sql/init.sql:/docker-entrypoint-initdb.d/0_init.sql
+      - db-data:/var/lib/mysql
+  phpmyadmin:
+    image: phpmyadmin
+    restart: always
+    ports:
+      - 3232:80
+volumes:
+  db-data:
